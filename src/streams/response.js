@@ -58,7 +58,7 @@ ResponseWriter.prototype._write = function(image){
       this.response.set({
         'Cache-Control':  'public',
         'Expires':        this.expiresIn(env.JSON_EXPIRY),
-        'Last-Modified':  (new Date(0)).toGMTString(),
+        'Last-Modified':  (new Date()).toGMTString(),
         'Vary':           'Accept-Encoding'
       });
     }
@@ -72,8 +72,8 @@ ResponseWriter.prototype._write = function(image){
   if (this.shouldCacheResponse()){
     this.response.set({
       'Cache-Control':  'public',
-      'Expires':        this.expiresIn(image.expiry),
-      'Last-Modified':  (new Date(0)).toGMTString(),
+      'Expires':        this.expiresIn(image.expiryLength),
+      'Last-Modified':  (new Date()).toGMTString(),
       'Vary':           'Accept-Encoding'
     });
   }

@@ -32,19 +32,16 @@ function Image(request){
   this.finished = null;
 
   // store the query string
-  this.queryString = request.query;
+  this.queryString = util.string.fromQuery(request.query);
 
   // set a mark for the start of the process
   this.mark = Date.now();
 
-  // determine the name and format (mime) of the requested image
-  this.parseImage(request);
-
   // determine the requested modifications
-  this.modifiers = modifiers.parse(request.path);
+  this.modifiers = modifiers.parse(request.path, this.queryString.modifiers);
 
-  // pull the various parts needed from the request params
-  this.parseUrl(request);
+  // determine file id
+  this.parseUrl(request, this.queryString.modifiers);
 
   // placeholder for the buffer/stream coming from s3, will hold the image
   this.contents = null;
@@ -60,37 +57,17 @@ function Image(request){
 }
 
 
-// Determine the name and format of the requested image
-Image.prototype.parseImage = function(request){
-  var fileStr = _.last(request.path.split('/'));
-
-  // clean out any metadata format
-  fileStr = fileStr.replace(/.json$/, '');
-
-  this.format = _.last(fileStr.split('.')).toLowerCase();
-  this.image  = fileStr;
-};
-
-
-// Determine the file path for the requested image
-Image.prototype.parseUrl = function(request){
+// Determine the file id for the requested image
+Image.prototype.parseUrl = function(request, qsModifiers){
+  // Strip leading slash and split on slash
   var parts = request.path.replace(/^\//,'').split('/');
 
-  // overwrite the image name with the parsed version so metadata requests do
-  // not mess things up
-  parts[parts.length - 1] = this.image;
-
-  // if the request is for no modification or metadata then assume the s3path
-  // is the entire request path
-  if (_.indexOf(['original', 'json'], this.modifiers.action) > -1){
-    this.path = parts.join('/');
-  }
-
-  // otherwise drop the first segment and set the s3path as the rest
-  else {
+  if (!qsModifiers || this.modifiers.action !== 'original'){
+    // unless we've set keyword modifiers or this is an implicit original request, drop the first part (it'll be the modifier bit)
+    // Backwards compat until we change the modifier template, remove later
     parts.shift();
-    this.path = parts.join('/');
   }
+  this.fileId = parts.shift().trim();
 };
 
 
